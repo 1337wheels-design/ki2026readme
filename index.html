@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KI Risiko Radar Dashboard 2026</title>
+    <style>
+        :root {
+            --primary: #1a1a2e;
+            --secondary: #16213e;
+            --accent: #0f3460;
+            --highlight: #e94560;
+            --success: #00d4ff;
+            --warning: #ffa500;
+            --danger: #ff6b6b;
+            --text: #ecf0f1;
+            --text-dim: #bdc3c7;
+            --grid: rgba(255, 255, 255, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            grid-column: 1 / -1;
+            padding: 1.5rem;
+            background: rgba(0, 212, 255, 0.05);
+            border: 2px solid var(--success);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--success);
+        }
+
+        .header-info {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+        }
+
+        .mode-toggle {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .mode-btn {
+            padding: 0.6rem 1.2rem;
+            border: 1px solid var(--text-dim);
+            background: transparent;
+            color: var(--text);
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .mode-btn.active {
+            background: var(--highlight);
+            border-color: var(--highlight);
+            color: white;
+        }
+
+        .mode-btn:hover {
+            border-color: var(--highlight);
+        }
+
+        .control-panel {
+            background: rgba(23, 32, 51, 0.8);
+            border: 1px solid var(--grid);
+            border-radius: 8px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .control-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .control-section h3 {
+            font-size: 0.95rem;
+            color: var(--success);
+            margin-bottom: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(15, 52, 96, 0.6);
+            border: 1px solid var(--text-dim);
+            color: var(--text);
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s;
+            font-size: 0.85rem;
+        }
+
+        .filter-btn.active {
+            background: var(--highlight);
+            border-color: var(--highlight);
+            color: white;
+        }
+
+        .filter-btn:hover {
+            background: var(--accent);
+        }
+
+        .industry-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .industry-item {
+            padding: 0.8rem;
+            background: rgba(15, 52, 96, 0.4);
+            border: 1px solid var(--grid);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .industry-item:hover {
+            background: rgba(15, 52, 96, 0.7);
+            border-color: var(--highlight);
+        }
+
+        .industry-item.active {
+            background: rgba(233, 69, 96, 0.2);
+            border-color: var(--highlight);
+        }
+
+        .industry-name {
+            font-weight: 500;
+            flex: 1;
+        }
+
+        .risk-score {
+            background: rgba(233, 69, 96, 0.2);
+            padding: 0.3rem 0.6rem;
+            border-radius: 3px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: var(--highlight);
+        }
+
+        .radar-container {
+            background: rgba(23, 32, 51, 0.8);
+            border: 1px solid var(--grid);
+            border-radius: 8px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 450px;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .detail-panel {
+            background: rgba(23, 32, 51, 0.8);
+            border: 1px solid var(--grid);
+            border-radius: 8px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            grid-column: 1 / -1;
+            display: none;
+        }
+
+        .detail-panel.active {
+            display: block;
+        }
+
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--grid);
+        }
+
+        .detail-header h2 {
+            font-size: 1.5rem;
+            color: var(--success);
+        }
+
+        .detail-close {
+            background: transparent;
+            border: 1px solid var(--text-dim);
+            color: var(--text);
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .detail-close:hover {
+            background: var(--highlight);
+            border-color: var(--highlight);
+        }
+
+        .detail-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .detail-section {
+            background: rgba(15, 52, 96, 0.3);
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 3px solid var(--highlight);
+        }
+
+        .detail-section h3 {
+            color: var(--success);
+            margin-bottom: 0.8rem;
+            font-size: 1rem;
+        }
+
+        .dimension-item {
+            margin-bottom: 0.8rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid var(--grid);
+        }
+
+        .dimension-item:last-child {
+            border-bottom: none;
+        }
+
+        .dimension-name {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.3rem;
+        }
+
+        .dimension-bar {
+            height: 6px;
+            background: var(--grid);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .dimension-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), var(--highlight));
+            border-radius: 3px;
+        }
+
+        .challenge-box {
+            background: rgba(255, 165, 0, 0.1);
+            border-left: 3px solid var(--warning);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .challenge-box h4 {
+            color: var(--warning);
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .challenge-box p {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            margin-bottom: 0.5rem;
+        }
+
+        .tech-stack {
+            background: rgba(0, 212, 255, 0.05);
+            border: 1px solid var(--success);
+            padding: 0.8rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .tech-stack strong {
+            color: var(--success);
+        }
+
+        .export-section {
+            display: flex;
+            gap: 0.8rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--grid);
+        }
+
+        .export-btn {
+            flex: 1;
+            padding: 0.8rem;
+            background: var(--highlight);
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .export-btn:hover {
+            background: #ff3860;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(233, 69, 96, 0.4);
+        }
+
+        .compare-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .compare-panel {
+            background: rgba(23, 32, 51, 0.8);
+            border: 2px solid var(--grid);
+            border-radius: 8px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .compare-panel.selected {
+            border-color: var(--highlight);
+        }
+
+        .compare-header {
+            color: var(--success);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .compare-industry {
+            background: rgba(15, 52, 96, 0.4);
+            padding: 0.8rem;
+            margin-bottom: 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+
+        .compare-industry:hover {
+            border-color: var(--highlight);
+            background: rgba(15, 52, 96, 0.7);
+        }
+
+        .compare-industry.selected {
+            background: rgba(233, 69, 96, 0.2);
+            border-color: var(--highlight);
+        }
+
+        .comparison-result {
+            grid-column: 1 / -1;
+            background: rgba(0, 212, 255, 0.05);
+            border: 2px solid var(--success);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            display: none;
+        }
+
+        .comparison-result.active {
+            display: block;
+        }
+
+        .comparison-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--grid);
+        }
+
+        .comparison-header h3 {
+            color: var(--success);
+            font-size: 1.2rem;
+        }
+
+        .comparison-matrix {
+            display: grid;
+            grid-template-columns: auto 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .comparison-cell {
+            padding: 0.8rem;
+            background: rgba(15, 52, 96, 0.3);
+            border-radius: 4px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .comparison-cell.header {
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .comparison-cell.label {
+            text-align: left;
+            color: var(--text-dim);
+        }
+
+        .comparison-cell.higher {
+            color: var(--danger);
+            font-weight: 600;
+        }
+
+        .comparison-cell.lower {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .mobile-mode {
+            display: none;
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .detail-content {
+                grid-template-columns: 1fr;
+            }
+
+            .compare-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+                gap: 1rem;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .mode-toggle {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .mobile-mode {
+                display: block;
+            }
+
+            .control-panel,
+            .radar-container,
+            .detail-panel {
+                grid-column: 1 / -1;
+            }
+
+            .industry-list {
+                max-height: 200px;
+            }
+
+            .header h1 {
+                font-size: 1.3rem;
+            }
+
+            .detail-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .scrollbar::-webkit-scrollbar-thumb {
+            background: var(--highlight);
+            border-radius: 3px;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: var(--success);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            z-index: 1000;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>🎯 KI Risiko Radar 2026</h1>
+                <div class="header-info">Vollständige Branchenanalyse | DSGVO, BaFin, EU AI Act</div>
+            </div>
+            <div class="mode-toggle">
+                <button class="mode-btn active" data-mode="overview">Überblick</button>
+                <button class="mode-btn" data-mode="compare">Vergleich</button>
+                <button class="mode-btn" data-mode="detail">Details</button>
+            </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <div class="control-section">
+                <h3>🎯 Risikofilter</h3>
+                <div class="filter-group">
+                    <button class="filter-btn active" data-filter="all">Alle</button>
+                    <button class="filter-btn" data-filter="high">Hoch</button>
+                    <button class="filter-btn" data-filter="medium">Mittel</button>
+                    <button class="filter-btn" data-filter="low">Niedrig</button>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>📊 Dimensionen</h3>
+                <div class="filter-group">
+                    <button class="filter-btn active" data-dimension="ki-disruption">KI-Disruption</button>
+                    <button class="filter-btn" data-dimension="regulativ">Regulativ</button>
+                    <button class="filter-btn" data-dimension="haftung">Haftung</button>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>🏢 Branchen</h3>
+                <div class="industry-list scrollbar" id="industryList"></div>
+            </div>
+        </div>
+
+        <!-- Radar Canvas -->
+        <div class="radar-container">
+            <canvas id="radarCanvas" width="400" height="400"></canvas>
+        </div>
+
+        <!-- Detail Panel -->
+        <div class="detail-panel" id="detailPanel">
+            <div class="detail-header">
+                <h2 id="detailTitle">Branche auswählen</h2>
+                <button class="detail-close">✕ Schließen</button>
+            </div>
+            <div class="detail-content" id="detailContent"></div>
+            <div class="export-section">
+                <button class="export-btn" id="exportJSON">📥 JSON Export</button>
+                <button class="export-btn" id="exportCSV">📥 CSV Export</button>
+            </div>
+        </div>
+
+        <!-- Compare Mode -->
+        <div id="compareMode" style="display: none;">
+            <div class="compare-container">
+                <div class="compare-panel" id="comparePanel1">
+                    <div class="compare-header">Industrie 1</div>
+                    <div id="compareList1" class="industry-list scrollbar"></div>
+                </div>
+                <div class="compare-panel" id="comparePanel2">
+                    <div class="compare-header">Industrie 2</div>
+                    <div id="compareList2" class="industry-list scrollbar"></div>
+                </div>
+            </div>
+
+            <div class="comparison-result" id="comparisonResult">
+                <div class="comparison-header">
+                    <h3>📊 Vergleichsanalyse</h3>
+                    <button class="detail-close" id="closeComparison">✕ Vergleich löschen</button>
+                </div>
+                <div class="comparison-matrix" id="comparisonMatrix"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== INDUSTRY DATA ==========
+        const industries = [
+            {
+                id: 'finance',
+                name: '💰 Finance & Banking',
+                riskScore: 8.5,
+                dimensions: {
+                    'KI-Disruption': 0.85,
+                    'Datenqualität': 0.92,
+                    'Regulativ': 0.95,
+                    'Haftung': 0.88,
+                    'Wissensintensität': 0.90
+                },
+                challenges: [
+                    {
+                        title: 'Real-Time Compliance Monitoring',
+                        description: 'DSGVO + GDPR Enforcement mit KI-gestützter Überwachung',
+                        techStack: 'Node.js + PostgreSQL + Redis + Kafka | LLM: Qwen-7B für Compliance Analysis'
+                    },
+                    {
+                        title: 'Algorithmic Bias Detection',
+                        description: 'Bias in Kreditvergabe und Kundenrisiko-Bewertung',
+                        techStack: 'Python + Pandas + Fairness-Metriken | Model: XGBoost + SHAP Explainability'
+                    },
+                    {
+                        title: 'Model Explainability (BaFin)',
+                        description: 'White-Box ML-Modelle für regulatorische Genehmigung',
+                        techStack: 'SpringBoot REST API + LIME/SHAP + Neo4j Knowledge Graph'
+                    }
+                ]
+            },
+            {
+                id: 'tech',
+                name: '🚀 Tech/DevOps/SaaS',
+                riskScore: 7.0,
+                dimensions: {
+                    'KI-Disruption': 0.70,
+                    'Datenqualität': 0.80,
+                    'Regulativ': 0.65,
+                    'Haftung': 0.72,
+                    'Wissensintensität': 0.85
+                },
+                challenges: [
+                    {
+                        title: 'IP-Liability & Prompt Injection',
+                        description: 'LLM-Outputs verwenden automatisch Training-Data ohne Kenntnis',
+                        techStack: 'TypeScript + Supabase + Constitutional AI für Prompt Filtering'
+                    },
+                    {
+                        title: 'Model Supply Chain Risk',
+                        description: 'Abhängigkeit von Drittanbieter-LLMs (OpenAI, Anthropic)',
+                        techStack: 'Alternative: Qwen oder Llama lokal gehostet | Kubernetes für Isolation'
+                    },
+                    {
+                        title: 'Zero-Trust Architectures',
+                        description: 'RAG-Systeme mit Vektor-DB Governance',
+                        techStack: 'Spring Cloud + Neo4j + ChromaDB + Vector Indexing'
+                    }
+                ]
+            },
+            {
+                id: 'consulting',
+                name: '🎓 Consulting & Professional Services',
+                riskScore: 7.25,
+                dimensions: {
+                    'KI-Disruption': 0.72,
+                    'Datenqualität': 0.68,
+                    'Regulativ': 0.70,
+                    'Haftung': 0.75,
+                    'Wissensintensität': 0.95
+                },
+                challenges: [
+                    {
+                        title: 'Client Context Loss',
+                        description: 'KI verliert kulturelle/geopolitische Nuancen in Empfehlungen',
+                        techStack: 'RAG mit Kontekt-Chunks | Ollama local + BM25 Indexing'
+                    },
+                    {
+                        title: '0-FTE Model Liability',
+                        description: '100% KI-generierte Deliverables ohne HR-Review',
+                        techStack: 'Human-in-Loop Workflows mit Slack/OpenRouter Integration'
+                    },
+                    {
+                        title: 'Pricing Opacity',
+                        description: 'Keine KI-Kosten separiert von Professional Services',
+                        techStack: 'Usage Analytics Dashboard mit Token-Tracking'
+                    }
+                ]
+            },
+            {
+                id: 'healthcare',
+                name: '🏥 Healthcare & Life Sciences',
+                riskScore: 9.2,
+                dimensions: {
+                    'KI-Disruption': 0.82,
+                    'Datenqualität': 0.95,
+                    'Regulativ': 0.98,
+                    'Haftung': 0.96,
+                    'Wissensintensität': 0.88
+                },
+                challenges: [
+                    {
+                        title: 'Diagnostic Liability & FDA Compliance',
+                        description: 'AI-gestützte Diagnosen ohne validierte Metriken',
+                        techStack: 'HIPAA-compliant REST API + HSM-Verschlüsselung'
+                    },
+                    {
+                        title: 'Patient Data Privacy (GDPR)',
+                        description: 'Genomic + Medical Records Tokenization erforderlich',
+                        techStack: 'Kubernetes + etcd + Zero-Knowledge Proofs für Validierung'
+                    },
+                    {
+                        title: 'Model Drift Monitoring',
+                        description: 'Langfrist-Genauigkeit von Medical AI Models tracken',
+                        techStack: 'Grafana + Prometheus + MLflow Model Registry'
+                    }
+                ]
+            },
+            {
+                id: 'retail',
+                name: '🛍️ Retail & E-Commerce',
+                riskScore: 6.5,
+                dimensions: {
+                    'KI-Disruption': 0.65,
+                    'Datenqualität': 0.72,
+                    'Regulativ': 0.58,
+                    'Haftung': 0.60,
+                    'Wissensintensität': 0.70
+                },
+                challenges: [
+                    {
+                        title: 'Energy Cost Realism',
+                        description: 'KI-Empfehlungen berücksichtigen nicht Real-Time Energiepreise',
+                        techStack: 'Node.js + GraphQL + EnergyData APIs (ENTSO-E Connector)'
+                    },
+                    {
+                        title: 'Bias in Recommendations',
+                        description: 'Algorithmic Bias erzeugt systematische Über-/Unterrepräsentation',
+                        techStack: 'PyTorch + Fairness-Audit + A/B Testing Framework'
+                    },
+                    {
+                        title: 'Consumer Trust Metrics',
+                        description: 'Transparenz-Anforderungen bei KI-gestützten Pricing',
+                        techStack: 'React Dashboard + REST API + Real-time Notifications'
+                    }
+                ]
+            },
+            {
+                id: 'legal',
+                name: '⚖️ Legal & Compliance',
+                riskScore: 8.0,
+                dimensions: {
+                    'KI-Disruption': 0.78,
+                    'Datenqualität': 0.85,
+                    'Regulativ': 0.92,
+                    'Haftung': 0.90,
+                    'Wissensintensität': 0.93
+                },
+                challenges: [
+                    {
+                        title: 'Legal Precedent Loss',
+                        description: 'KI kann nicht zwischen regulatorischem vs. präzedenzfall Context unterscheiden',
+                        techStack: 'Knowledge Graph + Neo4j + Entity Extraction mit NER'
+                    },
+                    {
+                        title: 'Contract Hallucination',
+                        description: 'LLMs erfinden Klauseln die nicht existieren',
+                        techStack: 'LangChain + Prompt Engineering + Human Review Workflows'
+                    },
+                    {
+                        title: 'Regulatory Compliance Gap Analysis',
+                        description: 'BaFin + GDPR + EU AI Act Compliance Tracking',
+                        techStack: 'SpringBoot + Elasticsearch + Real-time Alerting'
+                    }
+                ]
+            },
+            {
+                id: 'energy',
+                name: '⚡ Energy & Utilities',
+                riskScore: 7.8,
+                dimensions: {
+                    'KI-Disruption': 0.75,
+                    'Datenqualität': 0.88,
+                    'Regulativ': 0.82,
+                    'Haftung': 0.80,
+                    'Wissensintensität': 0.78
+                },
+                challenges: [
+                    {
+                        title: 'Grid Stability Prediction',
+                        description: 'Fehlerhafte KI-Prognosen erzeugen Cascading Blackouts',
+                        techStack: 'Time-Series ML (Prophet + LSTM) + SCADA Integration'
+                    },
+                    {
+                        title: 'Renewable Energy Forecasting',
+                        description: 'Solar/Wind Volatilität in kurzfrist-Prognosen unterschätzt',
+                        techStack: 'XGBoost + Weather APIs + Ensemble Methods'
+                    },
+                    {
+                        title: 'Carbon Tracking Accuracy',
+                        description: 'ESG-Reporting mit KI-basierten Emissions-Metriken',
+                        techStack: 'PostgreSQL + TimescaleDB + REST API + Grafana'
+                    }
+                ]
+            },
+            {
+                id: 'media',
+                name: '📺 Media & Entertainment',
+                riskScore: 6.8,
+                dimensions: {
+                    'KI-Disruption': 0.68,
+                    'Datenqualität': 0.75,
+                    'Regulativ': 0.62,
+                    'Haftung': 0.70,
+                    'Wissensintensität': 0.72
+                },
+                challenges: [
+                    {
+                        title: 'Synthetic Content Detection',
+                        description: 'Deepfakes + AI-Generated Content als Authentisch präsentiert',
+                        techStack: 'MediaPipe + Face Recognition APIs + Forensics Tooling'
+                    },
+                    {
+                        title: 'Copyright Infringement Risk',
+                        description: 'Training mit urheberrechtlich geschütztem Material ohne Lizenzen',
+                        techStack: 'Vector DB Query + Similarity Matching + Watermarking'
+                    },
+                    {
+                        title: 'Algorithm Transparency',
+                        description: 'Content Moderation + Recommendation System Explainability',
+                        techStack: 'MLflow + SHAP + Real-time Feature Importance Dashboard'
+                    }
+                ]
+            }
+        ];
+
+        // ========== STATE MANAGEMENT ==========
+        let state = {
+            selectedIndustry: null,
+            selectedCompare: [null, null],
+            currentMode: 'overview',
+            currentFilter: 'all',
+            currentDimension: 'ki-disruption'
+        };
+
+        // ========== UTILITY FUNCTIONS ==========
+        function getRiskColor(score) {
+            if (score >= 8) return '#ff6b6b'; // danger
+            if (score >= 6) return '#ffa500'; // warning
+            return '#00d4ff'; // success
+        }
+
+        function filterIndustries() {
+            if (state.currentFilter === 'all') return industries;
+            const thresholds = { high: 7, medium: 5, low: 0 };
+            const min = thresholds[state.currentFilter];
+            const max = state.currentFilter === 'high' ? 10 : state.currentFilter === 'medium' ? 7 : 5;
+            return industries.filter(ind => ind.riskScore >= min && ind.riskScore <= max);
+        }
+
+        // ========== RADAR RENDERING ==========
+        function drawRadar() {
+            const canvas = document.getElementById('radarCanvas');
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = 120;
+            const numDimensions = 5;
+
+            // Clear canvas
+            ctx.fillStyle = 'rgba(26, 26, 46, 0.8)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw grid lines
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 1;
+            for (let i = 1; i <= 5; i++) {
+                const r = (radius / 5) * i;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // Draw axes
+            ctx.strokeStyle = 'rgba(0, 212, 255, 0.3)';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < numDimensions; i++) {
+                const angle = (i * Math.PI * 2) / numDimensions - Math.PI / 2;
+                const x = centerX + Math.cos(angle) * radius;
+                const y = centerY + Math.sin(angle) * radius;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+
+                // Labels
+                ctx.fillStyle = '#00d4ff';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                const labelX = centerX + Math.cos(angle) * (radius + 30);
+                const labelY = centerY + Math.sin(angle) * (radius + 30);
+                const labels = ['KI-Disruption', 'Datenqualität', 'Regulativ', 'Haftung', 'Wissensintensität'];
+                ctx.fillText(labels[i], labelX, labelY);
+            }
+
+            // Draw selected industry data
+            if (state.selectedIndustry) {
+                const industry = state.selectedIndustry;
+                const dimNames = Object.keys(industry.dimensions);
+
+                ctx.fillStyle = 'rgba(233, 69, 96, 0.2)';
+                ctx.strokeStyle = '#e94560';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+
+                for (let i = 0; i < numDimensions; i++) {
+                    const angle = (i * Math.PI * 2) / numDimensions - Math.PI / 2;
+                    const value = industry.dimensions[dimNames[i]];
+                    const r = (radius / 5) * 5 * value; // Scale to radius
+                    const x = centerX + Math.cos(angle) * r;
+                    const y = centerY + Math.sin(angle) * r;
+
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Draw points
+                ctx.fillStyle = '#00d4ff';
+                for (let i = 0; i < numDimensions; i++) {
+                    const angle = (i * Math.PI * 2) / numDimensions - Math.PI / 2;
+                    const value = industry.dimensions[dimNames[i]];
+                    const r = (radius / 5) * 5 * value;
+                    const x = centerX + Math.cos(angle) * r;
+                    const y = centerY + Math.sin(angle) * r;
+
+                    ctx.beginPath();
+                    ctx.arc(x, y, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        // ========== INDUSTRY LIST RENDERING ==========
+        function renderIndustryList() {
+            const list = document.getElementById('industryList');
+            const filtered = filterIndustries();
+            list.innerHTML = '';
+
+            filtered.forEach(industry => {
+                const item = document.createElement('div');
+                item.className = `industry-item ${state.selectedIndustry?.id === industry.id ? 'active' : ''}`;
+                item.innerHTML = `
+                    <span class="industry-name">${industry.name}</span>
+                    <span class="risk-score">${industry.riskScore.toFixed(1)}</span>
+                `;
+                item.addEventListener('click', () => selectIndustry(industry));
+                list.appendChild(item);
+            });
+        }
+
+        function renderCompareList() {
+            const list1 = document.getElementById('compareList1');
+            const list2 = document.getElementById('compareList2');
+            const filtered = filterIndustries();
+
+            [list1, list2].forEach((list, index) => {
+                list.innerHTML = '';
+                filtered.forEach(industry => {
+                    const item = document.createElement('div');
+                    item.className = `compare-industry ${state.selectedCompare[index]?.id === industry.id ? 'selected' : ''}`;
+                    item.innerHTML = `
+                        <strong>${industry.name}</strong><br>
+                        <small>Risk: ${industry.riskScore.toFixed(1)}</small>
+                    `;
+                    item.addEventListener('click', () => selectCompare(index, industry));
+                    list.appendChild(item);
+                });
+            });
+        }
+
+        // ========== EVENT HANDLERS ==========
+        function selectIndustry(industry) {
+            state.selectedIndustry = industry;
+            state.currentMode = 'overview';
+            drawRadar();
+            renderIndustryList();
+            showDetail();
+        }
+
+        function selectCompare(index, industry) {
+            state.selectedCompare[index] = industry;
+            renderCompareList();
+            updateComparison();
+        }
+
+        function showDetail() {
+            const panel = document.getElementById('detailPanel');
+            const title = document.getElementById('detailTitle');
+            const content = document.getElementById('detailContent');
+
+            if (!state.selectedIndustry) return;
+
+            const industry = state.selectedIndustry;
+            title.textContent = `📊 ${industry.name} - Detailanalyse`;
+
+            content.innerHTML = `
+                <div class="detail-section">
+                    <h3>📈 Risikodimenionen</h3>
+                    ${Object.entries(industry.dimensions).map(([dim, val]) => `
+                        <div class="dimension-item">
+                            <div class="dimension-name">${dim}</div>
+                            <div class="dimension-bar">
+                                <div class="dimension-fill" style="width: ${val * 100}%"></div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="detail-section">
+                    <h3>⚠️ Top 3 Challenges</h3>
+                    ${industry.challenges.map(ch => `
+                        <div class="challenge-box">
+                            <h4>${ch.title}</h4>
+                            <p>${ch.description}</p>
+                            <div class="tech-stack"><strong>Stack:</strong> ${ch.techStack}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            panel.classList.add('active');
+        }
+
+        function updateComparison() {
+            const result = document.getElementById('comparisonResult');
+            if (!state.selectedCompare[0] || !state.selectedCompare[1]) {
+                result.classList.remove('active');
+                return;
+            }
+
+            const [ind1, ind2] = state.selectedCompare;
+            const matrix = document.getElementById('comparisonMatrix');
+
+            const dimNames = Object.keys(ind1.dimensions);
+            let html = `
+                <div class="comparison-cell header"></div>
+                <div class="comparison-cell header">${ind1.name}</div>
+                <div class="comparison-cell header">${ind2.name}</div>
+            `;
+
+            dimNames.forEach(dim => {
+                const val1 = ind1.dimensions[dim];
+                const val2 = ind2.dimensions[dim];
+                const higher = val1 > val2;
+
+                html += `
+                    <div class="comparison-cell label">${dim}</div>
+                    <div class="comparison-cell ${higher ? 'higher' : 'lower'}">${(val1 * 100).toFixed(0)}%</div>
+                    <div class="comparison-cell ${!higher ? 'higher' : 'lower'}">${(val2 * 100).toFixed(0)}%</div>
+                `;
+            });
+
+            matrix.innerHTML = html;
+            result.classList.add('active');
+        }
+
+        // ========== EXPORT FUNCTIONS ==========
+        document.getElementById('exportJSON')?.addEventListener('click', () => {
+            const data = state.selectedIndustry;
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${data.id}-risiko-analyse.json`;
+            a.click();
+        });
+
+        document.getElementById('exportCSV')?.addEventListener('click', () => {
+            const data = state.selectedIndustry;
+            let csv = `Branche,${data.name}\nRisk Score,${data.riskScore}\n\nDimensionen\n`;
+            Object.entries(data.dimensions).forEach(([dim, val]) => {
+                csv += `${dim},${val}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${data.id}-risiko-analyse.csv`;
+            a.click();
+        });
+
+        // ========== MODE SWITCHING ==========
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+
+                const mode = e.target.dataset.mode;
+                document.getElementById('detailPanel').style.display = mode === 'detail' ? 'block' : 'none';
+                document.getElementById('compareMode').style.display = mode === 'compare' ? 'block' : 'none';
+
+                if (mode === 'compare') renderCompareList();
+                else if (mode === 'detail') showDetail();
+            });
+        });
+
+        // ========== FILTER HANDLERS ==========
+        document.querySelectorAll('[data-filter]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                state.currentFilter = e.target.dataset.filter;
+                renderIndustryList();
+                renderCompareList();
+            });
+        });
+
+        // ========== CLOSE HANDLERS ==========
+        document.querySelector('.detail-close')?.addEventListener('click', () => {
+            document.getElementById('detailPanel').classList.remove('active');
+            state.selectedIndustry = null;
+            drawRadar();
+        });
+
+        document.getElementById('closeComparison')?.addEventListener('click', () => {
+            state.selectedCompare = [null, null];
+            document.getElementById('comparisonResult').classList.remove('active');
+            renderCompareList();
+        });
+
+        // ========== INITIALIZATION ==========
+        function init() {
+            renderIndustryList();
+            drawRadar();
+            
+            // Auto-select first industry
+            if (industries.length > 0) {
+                state.selectedIndustry = industries[0];
+                renderIndustryList();
+                drawRadar();
+                showDetail();
+            }
+        }
+
+        // Start app
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
